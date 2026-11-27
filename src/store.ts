@@ -56,7 +56,7 @@ export const useStore = create<Store>()(
       layers: false,
       isolate: null,
       guides: true,
-      projections: true,
+      projections: false,
       motion: true,
       wallSide: [-1, -1],
       viewResetToken: 0,
@@ -127,7 +127,13 @@ export const useStore = create<Store>()(
     }),
     {
       name: 'ttt-4x4x4',
-      version: 1,
+      version: 2,
+      // v2: projections became opt-in; reset the saved value once so everyone gets the new default
+      migrate: (persisted, version) => {
+        const p = (persisted ?? {}) as Record<string, unknown>;
+        if (version < 2) p.projections = false;
+        return p as never;
+      },
       partialize: (s) => ({ moves: s.moves, redo: s.redo, explode: s.explode, layers: s.layers, guides: s.guides, projections: s.projections, motion: s.motion }),
       merge: (persisted, current) => {
         const p = persisted as Partial<Store>;
