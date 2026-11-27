@@ -24,7 +24,7 @@ export function Hud() {
       </div>
       <div className="hint">
         Drag to rotate · scroll to zoom · right-drag to pan · click a cell to select, click again or press Enter
-        to place · arrows / Q E move the cursor · L layers · R reset view
+        to place · arrows / Q E move the cursor · view cube (top right) snaps views · L layers · P projections · M motion · R reset view
       </div>
     </div>
   );

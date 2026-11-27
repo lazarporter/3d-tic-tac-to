@@ -17,6 +17,10 @@ interface Store {
   layers: boolean; // split into 4 stacked boards
   isolate: Isolate | null;
   guides: boolean;
+  projections: boolean; // floor + wall projections
+  motion: boolean; // mouse parallax + idle wobble
+  /** which side the projection walls are on (-1 or 1), following the camera; not persisted */
+  wallSide: [sx: number, sz: number];
   viewResetToken: number;
 
   setHover: (i: number | null) => void;
@@ -34,6 +38,9 @@ interface Store {
   setLayers: (v: boolean) => void;
   setIsolate: (v: Isolate | null) => void;
   setGuides: (v: boolean) => void;
+  setProjections: (v: boolean) => void;
+  setMotion: (v: boolean) => void;
+  setWallSide: (v: [number, number]) => void;
   resetView: () => void;
 }
 
@@ -49,6 +56,9 @@ export const useStore = create<Store>()(
       layers: false,
       isolate: null,
       guides: true,
+      projections: true,
+      motion: true,
+      wallSide: [-1, -1],
       viewResetToken: 0,
 
       setHover: (hover) => set({ hover }),
@@ -110,12 +120,15 @@ export const useStore = create<Store>()(
       setLayers: (layers) => set({ layers }),
       setIsolate: (isolate) => set({ isolate }),
       setGuides: (guides) => set({ guides }),
+      setProjections: (projections) => set({ projections }),
+      setMotion: (motion) => set({ motion }),
+      setWallSide: (wallSide) => set({ wallSide }),
       resetView: () => set((s) => ({ viewResetToken: s.viewResetToken + 1 })),
     }),
     {
       name: 'ttt-4x4x4',
       version: 1,
-      partialize: (s) => ({ moves: s.moves, redo: s.redo, explode: s.explode, layers: s.layers, guides: s.guides }),
+      partialize: (s) => ({ moves: s.moves, redo: s.redo, explode: s.explode, layers: s.layers, guides: s.guides, projections: s.projections, motion: s.motion }),
       merge: (persisted, current) => {
         const p = persisted as Partial<Store>;
         try {

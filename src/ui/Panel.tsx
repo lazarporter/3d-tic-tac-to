@@ -24,10 +24,22 @@ function GameButtons() {
   const { newGame, undo, redoMove } = useStore.getState();
   const canUndo = useStore((s) => s.moves.length > 0);
   const canRedo = useStore((s) => s.redo.length > 0);
+  const inProgress = useStore((s) => s.moves.length > 0 && !s.game.winner && !s.game.draw);
+  // Two-step confirm in the page itself (native confirm() dialogs are blocked in some embedded browsers).
+  const [armed, setArmed] = useState(false);
+  const onNew = () => {
+    if (inProgress && !armed) {
+      setArmed(true);
+      setTimeout(() => setArmed(false), 3000);
+      return;
+    }
+    setArmed(false);
+    newGame();
+  };
   return (
     <div className="row">
-      <button onClick={() => (useStore.getState().moves.length === 0 || confirm('Start a new game?')) && newGame()}>
-        New game
+      <button onClick={onNew} className={armed ? 'warn' : ''}>
+        {armed ? 'Click again to discard game' : 'New game'}
       </button>
       <button onClick={undo} disabled={!canUndo} title="Ctrl/Cmd+Z">Undo</button>
       <button onClick={redoMove} disabled={!canRedo} title="Ctrl/Cmd+Shift+Z">Redo</button>
@@ -56,6 +68,14 @@ function ViewControls() {
           Guide lines {s.guides ? 'on' : 'off'}
         </button>
         <button onClick={s.resetView} title="R">Reset view</button>
+      </div>
+      <div className="row">
+        <button className={s.projections ? 'on' : ''} onClick={() => s.setProjections(!s.projections)} title="P">
+          Projections {s.projections ? 'on' : 'off'}
+        </button>
+        <button className={s.motion ? 'on' : ''} onClick={() => s.setMotion(!s.motion)} title="M">
+          Motion cues {s.motion ? 'on' : 'off'}
+        </button>
       </div>
       <div className="row isolate">
         <span>Isolate</span>

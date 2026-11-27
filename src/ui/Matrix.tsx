@@ -70,24 +70,24 @@ function LayerTables() {
   return (
     <>
       <p className="note">
-        <code>board[z][y][x]</code>: one 4×4 table per layer. Rows are <code>y</code>, columns are <code>x</code>.
+        <code>board[z][y][x]</code>: one 4×4 table per layer. Rows are <code className="ax-y">y</code>, columns are <code className="ax-x">x</code>, layers are <code className="ax-z">z</code> (colors match the 3D axes).
         Hover or click here or in 3D.
       </p>
       <div className="layers">
         {Array.from({ length: N }, (_, z) => (
           <div key={z} className="layer">
-            <div className="layer-title">z = {z}{z === 0 ? ' (bottom)' : z === N - 1 ? ' (top)' : ''}</div>
+            <div className="layer-title ax-z">z = {z}{z === 0 ? ' (bottom)' : z === N - 1 ? ' (top)' : ''}</div>
             <table>
               <thead>
                 <tr>
                   <th />
-                  {Array.from({ length: N }, (_, x) => <th key={x}>x{x}</th>)}
+                  {Array.from({ length: N }, (_, x) => <th key={x} className="ax-x">x{x}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: N }, (_, y) => (
                   <tr key={y}>
-                    <th>y{y}</th>
+                    <th className="ax-y">y{y}</th>
                     {Array.from({ length: N }, (_, x) => {
                       const i = toIndex(x, y, z);
                       return <TableCell key={x} i={i} v={board[i]} cls={cellClass(i)} />;
@@ -137,7 +137,7 @@ function Flat() {
         <tbody>
           {Array.from({ length: N }, (_, z) => (
             <tr key={z}>
-              <th>z{z}</th>
+              <th className="ax-z">z{z}</th>
               {Array.from({ length: N * N }, (_, k) => {
                 const i = z * N * N + k;
                 return <TableCell key={i} i={i} v={board[i]} cls={cellClass(i)} showIndex />;

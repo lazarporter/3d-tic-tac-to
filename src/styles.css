@@ -104,3 +104,10 @@ textarea {
   width: 100%; margin-top: 8px; background: #0a0e1b; color: var(--text); border: 1px solid var(--line);
   border-radius: 8px; padding: 8px; font: 12px ui-monospace, Menlo, monospace; resize: vertical;
 }
+
+/* axis colors, matching the 3D frame */
+.ax-x { color: #ff6b6b !important; }
+.ax-y { color: #5ee6a8 !important; }
+.ax-z { color: #ffd166 !important; }
+th.ax-x, th.ax-y, th.ax-z { opacity: 0.75; }
+button.warn { background: #4a1d2c; border-color: #ff4fa3; }

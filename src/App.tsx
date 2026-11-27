@@ -7,8 +7,8 @@ import { useStore } from './store';
 function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement;
-      if (t.closest('input, textarea, select')) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, textarea, select')) return;
       const s = useStore.getState();
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === 'z') {
@@ -37,6 +37,10 @@ function useKeyboard() {
         s.resetView();
       } else if (e.key === 'l') {
         s.setLayers(!s.layers);
+      } else if (e.key === 'p') {
+        s.setProjections(!s.projections);
+      } else if (e.key === 'm') {
+        s.setMotion(!s.motion);
       }
     };
     window.addEventListener('keydown', onKey);
