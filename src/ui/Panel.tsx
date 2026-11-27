@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CELL_LINES, LINES, describeDirection, lineStatus, toCoord } from '../game/engine';
-import { useFocus, useStore, type Axis } from '../store';
+import { useFocus, useStore, type Axis, type Controller } from '../store';
 import { Matrix } from './Matrix';
 import { Mark, fmt } from './Hud';
 
@@ -10,6 +10,7 @@ export function Panel() {
       <header className="panel-head">
         <h1>4×4×4 Tic-Tac-Toe</h1>
         <GameButtons />
+        <Players />
       </header>
       <ViewControls />
       <Matrix />
@@ -43,6 +44,33 @@ function GameButtons() {
       </button>
       <button onClick={undo} disabled={!canUndo} title="Ctrl/Cmd+Z">Undo</button>
       <button onClick={redoMove} disabled={!canRedo} title="Ctrl/Cmd+Shift+Z">Redo</button>
+    </div>
+  );
+}
+
+const CONTROLLERS: { value: Controller; label: string }[] = [
+  { value: 'human', label: 'Friend' },
+  { value: 'easy', label: 'Easy bot' },
+  { value: 'medium', label: 'Medium bot' },
+];
+
+function Players() {
+  const opponent = useStore((s) => s.players[2]);
+  const setOpponent = useStore((s) => s.setOpponent);
+  return (
+    <div className="players">
+      <div className="row seat">
+        <span>Opponent</span>
+        {CONTROLLERS.map((c) => (
+          <button key={c.value} className={opponent === c.value ? 'on' : ''} onClick={() => setOpponent(c.value)}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <p className="note seat-note">
+        You play <Mark p={1} /> and always move first{opponent === 'human' ? '; your friend plays ' : '; the bot plays '}
+        <Mark p={2} />.
+      </p>
     </div>
   );
 }

@@ -111,3 +111,11 @@ textarea {
 .ax-z { color: #ffd166 !important; }
 th.ax-x, th.ax-y, th.ax-z { opacity: 0.75; }
 button.warn { background: #4a1d2c; border-color: #ff4fa3; }
+
+.players { margin-top: 6px; }
+.seat { margin-top: 6px; }
+.seat .mark { width: 18px; font-size: 17px; text-align: center; }
+.seat button { padding: 4px 10px; font-size: 12px; }
+.dots::after { content: ''; animation: dots 1.2s steps(4) infinite; }
+@keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+.seat-note { margin: 6px 0 0; }

@@ -3,6 +3,7 @@ import { Scene } from './scene/Scene';
 import { Panel } from './ui/Panel';
 import { Hud } from './ui/Hud';
 import { useStore } from './store';
+import { useBotDriver } from './ai/useBotDriver';
 
 function useKeyboard() {
   useEffect(() => {
@@ -50,6 +51,7 @@ function useKeyboard() {
 
 export default function App() {
   useKeyboard();
+  useBotDriver();
   return (
     <div className="app">
       <main className="stage">

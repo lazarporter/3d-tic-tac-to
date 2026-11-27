@@ -6,13 +6,22 @@ export function Hud() {
   const selected = useStore((s) => s.selected);
   const hover = useStore((s) => s.hover);
   const focus = hover ?? selected;
+  const players = useStore((s) => s.players);
+  const vsComputer = (players[1] === 'human') !== (players[2] === 'human');
+  const label = (p: 1 | 2) => (players[p] === 'human' ? '' : ` (${players[p] === 'easy' ? 'Easy' : 'Medium'} bot)`);
 
   const xThreats = threats(game.board, 1).length;
   const oThreats = threats(game.board, 2).length;
 
   let status: React.ReactNode;
-  if (game.winner) status = <><Mark p={game.winner} /> wins!</>;
-  else if (game.draw) status = <>Draw: the board is full</>;
+  if (game.winner) {
+    status =
+      vsComputer && players[game.winner] === 'human' ? <>You win as <Mark p={game.winner} />!</>
+      : vsComputer ? <><Mark p={game.winner} />{label(game.winner)} wins</>
+      : <><Mark p={game.winner} />{label(game.winner)} wins!</>;
+  } else if (game.draw) status = <>Draw: the board is full</>;
+  else if (players[game.current] !== 'human') status = <><Mark p={game.current} />{label(game.current)} is thinking<span className="dots" /></>;
+  else if (vsComputer) status = <>Your move as <Mark p={game.current} /></>;
   else status = <><Mark p={game.current} /> to move</>;
 
   return (

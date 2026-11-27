@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CELLS, N, canPlay, replay, toCoord, toIndex, type GameState } from './game/engine';
+import { CELLS, N, canPlay, replay, toCoord, toIndex, type GameState, type Player } from './game/engine';
+import type { BotLevel } from './ai/bot';
+
+/** Who controls a seat. */
+export type Controller = 'human' | BotLevel;
 
 export type Axis = 'x' | 'y' | 'z';
 export interface Isolate { axis: Axis; index: number }
@@ -12,6 +16,10 @@ interface Store {
 
   hover: number | null;
   selected: number | null;
+
+  players: Record<Player, Controller>;
+  /** the bot has picked a cell and is about to place it (not persisted) */
+  botThinking: boolean;
 
   explode: number; // 0..1
   layers: boolean; // split into 4 stacked boards
@@ -28,6 +36,11 @@ interface Store {
   clickCell: (i: number) => void;
   select: (i: number | null) => void;
   placeSelected: () => void;
+  /** places a move for the computer (bypasses the human-turn check) */
+  botMove: (i: number) => void;
+  /** X is always the human and moves first; this sets who plays O */
+  setOpponent: (c: Controller) => void;
+  setBotThinking: (v: boolean) => void;
   moveCursor: (dx: number, dy: number, dz: number) => void;
   undo: () => void;
   redoMove: () => void;
@@ -52,6 +65,8 @@ export const useStore = create<Store>()(
       game: replay([]),
       hover: null,
       selected: null,
+      players: { 1: 'human', 2: 'human' },
+      botThinking: false,
       explode: 0.35,
       layers: false,
       isolate: null,
@@ -75,11 +90,22 @@ export const useStore = create<Store>()(
       },
 
       placeSelected: () => {
-        const { selected, game, moves } = get();
+        const { selected, game, moves, players } = get();
+        if (players[game.current] !== 'human') return; // computer's turn
         if (selected === null || !canPlay(game, selected)) return;
         const next = [...moves, selected];
         set({ moves: next, redo: [], game: replay(next) });
       },
+
+      botMove: (i) => {
+        const { game, moves } = get();
+        if (!canPlay(game, i)) return;
+        const next = [...moves, i];
+        set({ moves: next, redo: [], game: replay(next), botThinking: false, selected: null });
+      },
+
+      setOpponent: (c) => set({ players: { 1: 'human', 2: c } }),
+      setBotThinking: (botThinking) => set({ botThinking }),
 
       moveCursor: (dx, dy, dz) => {
         const { selected, hover } = get();
@@ -93,22 +119,33 @@ export const useStore = create<Store>()(
         set({ selected: toIndex(clamp(x + dx), clamp(y + dy), clamp(z + dz)) });
       },
 
+      // Against the computer, undo/redo step back to the last human turn (your move and its reply).
       undo: () => {
-        const { moves, redo } = get();
+        const { moves, redo, players } = get();
         if (!moves.length) return;
-        const last = moves[moves.length - 1];
-        const next = moves.slice(0, -1);
-        set({ moves: next, redo: [last, ...redo], game: replay(next), selected: last });
+        const anyHuman = players[1] === 'human' || players[2] === 'human';
+        let next = moves.slice(0, -1);
+        let back = [moves[moves.length - 1], ...redo];
+        while (anyHuman && next.length && players[replay(next).current] !== 'human') {
+          back = [next[next.length - 1], ...back];
+          next = next.slice(0, -1);
+        }
+        set({ moves: next, redo: back, game: replay(next), selected: back[0], botThinking: false });
       },
 
       redoMove: () => {
-        const { moves, redo } = get();
+        const { moves, redo, players } = get();
         if (!redo.length) return;
-        const next = [...moves, redo[0]];
-        set({ moves: next, redo: redo.slice(1), game: replay(next), selected: null });
+        let next = [...moves, redo[0]];
+        let rest = redo.slice(1);
+        while (rest.length && players[replay(next).current] !== 'human') {
+          next = [...next, rest[0]];
+          rest = rest.slice(1);
+        }
+        set({ moves: next, redo: rest, game: replay(next), selected: null });
       },
 
-      newGame: () => set({ moves: [], redo: [], game: replay([]), selected: null }),
+      newGame: () => set({ moves: [], redo: [], game: replay([]), selected: null, botThinking: false }),
 
       loadMoves: (moves) => {
         if (!moves.every((m) => Number.isInteger(m) && m >= 0 && m < CELLS)) throw new Error('Moves must be cell indices 0–63');
@@ -134,11 +171,13 @@ export const useStore = create<Store>()(
         if (version < 2) p.projections = false;
         return p as never;
       },
-      partialize: (s) => ({ moves: s.moves, redo: s.redo, explode: s.explode, layers: s.layers, guides: s.guides, projections: s.projections, motion: s.motion }),
+      partialize: (s) => ({ moves: s.moves, redo: s.redo, players: s.players, explode: s.explode, layers: s.layers, guides: s.guides, projections: s.projections, motion: s.motion }),
       merge: (persisted, current) => {
         const p = persisted as Partial<Store>;
         try {
-          return { ...current, ...p, game: replay(p.moves ?? []) };
+          // X is always human (older saves could put a bot on X)
+          const players = { 1: 'human' as const, 2: p.players?.[2] ?? 'human' };
+          return { ...current, ...p, players, game: replay(p.moves ?? []) };
         } catch {
           return current;
         }
